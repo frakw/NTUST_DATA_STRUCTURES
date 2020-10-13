@@ -9,11 +9,11 @@ using namespace std;
 int my_strlen(char* input);
 bool check_brackets(char* input, int length);
 bool check_operator(char* input, int length);
-bool OP_greater_or_equal_to(char a, char b);
+int priority(char op);
 
 class out {
 public:
-	char output[1000];//不能只設70，因為很多空白要存
+	char output[140];//不能只設70，因為很多空白要存
 	int stack[MAX_SIZE];
 	int size = 0;
 	out& operator<<(char a) {
@@ -21,7 +21,7 @@ public:
 		return *this;
 	}
 	void print_result() {
-		output[TOP] = '\0';
+		output[TOP] = '\0';//There is no space at the end of line.
 		cout << output << endl;
 		int postfix_len = size;
 		size = 0;
@@ -95,19 +95,19 @@ int main() {
 			}
 			switch (input[i])
 			{
-			case'(': {
-				stack[PUSH] = '(';
-			}break;
-			case')': {
-				char tmp;
-				while (tmp = stack[POP], tmp != '(') output << tmp << ' ';
-			}break;
-			case'+':case'-':case'*':case'/': {
-				while (OP_greater_or_equal_to(stack[TOP], input[i])) output << stack[POP] << ' ';
-				stack[PUSH] = input[i];
-			}break;
-			default:
-				break;
+				case'(': {
+					stack[PUSH] = '(';
+				}break;
+				case')': {
+					char tmp;
+					while (tmp = stack[POP], tmp != '(') output << tmp << ' ';
+				}break;
+				case'+':case'-':case'*':case'/': {
+					while (priority(stack[TOP]) >= priority(input[i])) output << stack[POP] << ' ';
+					stack[PUSH] = input[i];
+				}break;
+				default:
+					break;
 			}
 		}
 		output.print_result();
@@ -125,54 +125,39 @@ bool check_brackets(char* input,int length) {
 	int count = 0;
 	for (int i = 0;i < length;i++) {
 		switch (input[i]) {
-		case'(': {
-			count++;
-		}break;
-		case')': {
-			if (!count) return false;
-			count--;
-		}break;
-		default:break;
+			case'(': {
+				count++;
+			}break;
+			case')': {
+				if (!count) return false;
+				count--;
+			}break;
+			default:break;
 		}
 	}
 	if (count) return false;
 	return true;
 }
 bool check_operator(char* input,int length) {
-	if (input[0] == '+' || input[0] == '-' || input[0] == '*' || input[0] == '/')return false;
-	if (input[length - 1] == '+' || input[length - 1] == '-' || input[length - 1] == '*' || input[length - 1] == '/')return false;
+	if (input[0] == '+' || input[0] == '-' || input[0] == '*' || input[0] == '/' || input[length - 1] == '+' || input[length - 1] == '-' || input[length - 1] == '*' || input[length - 1] == '/')return false;
 	for (int i = 1;i < (length-1);i++) {
 		switch (input[i])
 		{
-		case'+':case'-':case'*':case'/': {
-			if (!isdigit(input[i - 1]) && input[i - 1] != ')') return false;
-			if (!isdigit(input[i + 1]) && input[i + 1] != '(') return false;
-		}break;
+			case'+':case'-':case'*':case'/': {
+				if (!isdigit(input[i - 1]) && input[i - 1] != ')' && !isdigit(input[i + 1]) && input[i + 1] != '(') return false;
+			}break;
 		
-		default:
-			break;
+			default:
+				break;
 		}
 	}
 	return true;
 }
 
-bool OP_greater_or_equal_to(char a,char b) {//(top,new_op)
-	int val1, val2;
-	switch (a)
-	{
-	case'(':case')':val1 =1 ;break;
-	case'+':case'-':val1 = 2;break;
-	case'*':case'/':case'%':val1 = 3;break;
-	default:
-		break;
+int priority(char op) {
+	switch (op) {
+	case '*': case '/': return 2;
+	case '+': case '-': return 1;
+	default:            return 0;
 	}
-	switch (b)
-	{
-	case'(':case')':val2 = 1;break;
-	case'+':case'-':val2 = 2;break;
-	case'*':case'/':case'%':val2 = 3;break;
-	default:
-		break;
-	}
-	return val1 >= val2;
 }
