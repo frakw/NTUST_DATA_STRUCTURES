@@ -2,7 +2,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #define isdigit(x) (((unsigned int)x - '0') < 10u)
-void print_num(int n){
+void print_num(int n){//只能丟正數進來
     if (n > 9){
         int a = n / 10;
         n -= 10 * a;
@@ -17,16 +17,22 @@ int main(void) {
     while (c = getchar(),isdigit(c)) M = M * 10 + c - '0';
     int* arr = (int*)malloc(N * sizeof(int));
     for (i = 0; i < N; ++i) {
-        while (c = getchar(), c == ' ');
+        while (c = getchar(), c == ' ');//跳過所有空白
         if (c != '-') {
-            arr[i] = c - '0';
-            while (c = getchar(),isdigit(c)) arr[i] = arr[i] * 10 + c - '0';
+            arr[i] = c - '0';//先c裡的數字取出，順便覆蓋arr[i]，因malloc不會初始化
+            while (c = getchar(), isdigit(c)) arr[i] = arr[i] * 10 + c - '0';//讀到不是數字為止，邊讀邊加
         }
-        else {
-            arr[i] = getchar() - '0';
-            while (c = getchar(),isdigit(c)) arr[i] = arr[i] * 10 + c - '0';
-            arr[i] = ~arr[i] + 1;
+        else {//讀取到負號
+            arr[i] = getchar() - '0';//再拿新的字元出來，順便覆蓋arr[i]
+            while (c = getchar(), isdigit(c)) arr[i] = arr[i] * 10 + c - '0';//讀到不是數字為止，邊讀邊加
+            arr[i] = ~arr[i] + 1;//將arr[i]乘以-1，用反相後+1，速度更快
         }
+
+
+        /*
+        if (i < M - 1)代表前面的數字不夠下面的for迴圈去檢查，所以直接continue;進行下一個數字的回合，
+        數字足夠，就會跑for (j = 1; j < M && arr[i - j + 1] > arr[i - j];++j);
+        若在中途被arr[i - j + 1] > arr[i - j]給break掉，就代表從arr的index為i到i-t+1之間並非遞增數列*/
 
         if (i < M - 1) continue;
         for (j = 1; j < M && arr[i - j + 1] > arr[i - j];++j);
@@ -34,16 +40,19 @@ int main(void) {
             N -= M;
             i -= M;
         }
+        /*則會跑完整個for迴圈，導致j == M，接著就要刪除此遞增數列，但不須實際刪除記憶體空間，
+        只需把i(index)指到i-M處，下一次讀入數字就被覆蓋掉了，因為刪除了數列，所以數列總數N也要減去M
+        */
     }
-    for (i = 0; i < N;++i) {
-        if (arr[i] < 0) {
-            putchar('-');
-            arr[i] = ~arr[i] + 1;
+    for (i = 0; i < N;++i) {//輸出結果
+        if (arr[i] < 0) {//若為負數
+            putchar('-');//印出負號
+            arr[i] = ~arr[i] + 1;//乘上負1，轉為正數，因為print_num，只能使用正數
         }
-        print_num(arr[i]);
-        putchar(' '); 
+        print_num(arr[i]);//呼叫print_num，印出數字
+        putchar(' ');//每個數字間的空白
     }
-    free(arr);
+    free(arr);//釋放記憶體
     return 0;
 }
 //#include<iostream>
