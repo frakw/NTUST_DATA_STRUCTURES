@@ -24,17 +24,18 @@ public:
 
 	void set_null() { for (int i = 0;i <= order;i++)child[i] = nullptr; }//所有小孩設成空
 	void leaf_insert(T new_data) {//B樹的insert都是從leaf node開始，爆掉了再往上長，所以這個funcition用於新資料的insert，是專屬於整棵樹的insert function
-		if (child[0] != nullptr) {//不是leaf node，
+		//B樹leaf node以外的node都至少有一個小孩，所以拿0號小孩指標確認有無小孩
+		if (child[0] != nullptr) {//不是leaf node，遞迴找到leaf node再用普通的insert
 			for (int i = 0;i < data_num;i++) {
-				if (new_data < data[i]) {
+				if (new_data < data[i]) {//找到第一個大於的資料，就是插入後要放的地方
 					child[i]->leaf_insert(new_data);//遞迴下一個節點
-					return;
+					return;//結束掉，不然會跑到下面那行
 				}
 			}
 			child[data_num]->leaf_insert(new_data);//上面都沒進入遞迴就會跑到這行，代表新資料大於node裡的所有資料，找最右邊的指標遞迴
 		}
 		else {//是leaf node
-			insert(new_data,nullptr);//經過許多遞迴後成功找到leaf node，是專屬於node的insert function
+			insert(new_data,nullptr);//經過許多遞迴後成功找到leaf node，這是專屬於node的insert function，由於是新資料所以沒有分割後的指標，填null就好
 		}
 	}
 	void insert(T new_data, B_tree_node<T, order>* split_node) {//第一個參數是新資料，第二個參數是當爆掉時node分割後的指標(右邊那側的分割)
@@ -48,15 +49,15 @@ public:
 		int i;
 		for (i = 0;i < data_num;i++) {
 			if (new_data < data[i]) {//找到自己的位置
-				child[order] = child[order - 1];//因為要插入新資料，把舊資料往後移，指標多一個，所以額外處理最後一個指標
-				for (int j = order - 2;j >= i;j--) {
-					data[j + 1] = data[j];//把舊資料往後移
-					child[j + 1] = child[j];//把舊指標往後移
+				child[order] = child[order - 1];//因為要插入新資料，把舊資料往後移，但指標多一個，所以額外處理最後一個指標
+				for (int j = order - 1;j > i;j--) {
+					data[j] = data[j - 1];//把舊資料往後移
+					child[j] = child[j - 1];//把舊指標往後移
 				}
 				data[i] = new_data;//插入
 				child[i] = child[i + 1];//分割後的左側指標不變，但被上面的迴圈搬動了，所以搬回來
 				child[i + 1] = split_node;//插入分割後的右側指標
-				break;//找到位置就不用再繼續找了
+				break;//找到位置後插入就不用再繼續找了
 			}
 		}
 		if (i == data_num) {//如果新資料大於所有舊資料，不用做任何搬動，放到最後就好
@@ -69,7 +70,7 @@ public:
 				father = new B_tree_node<T, order>;
 				father->child[0] = this;//爆掉後自己就變成分割後的左侧，右側由爸爸產生並搬家
 			}
-			father->help_child(this);//爆掉後呼叫的function，產分割後的右侧並搬家
+			father->help_child(this);//爆掉後呼叫的function，產生分割後的右侧並搬家
 			data_num /= 2;//分割後的資料數是原資料數除以2
 		}
 	}
@@ -79,16 +80,16 @@ public:
 		for (int i = full->data_num / 2 + 1;i < order;i++,index++) {//把小孩右側搬到新node
 			split->data[index] = full->data[i];//搬資料
 			split->child[index] = full->child[i];//搬指標
-			if (split->child[index] != nullptr) {//小孩的小孩不為空
-				split->child[index]->father = split;//小孩的小孩因為分割，所以要換新爸爸
+			if (split->child[index] != nullptr) {//如果小孩的小孩不為空，代表有孫子
+				split->child[index]->father = split;//小孩的小孩(孫子)因為原爸爸被分割，所以要換新爸爸
 			}
 		}
 		split->child[index] = full->child[order];//因為指標多一個，額外搬最後一個指標
 		if (split->child[index] != nullptr) {
-			split->child[index]->father = split;//小孩的小孩因為分割，所以要換新爸爸
+			split->child[index]->father = split;//小孩的小孩(孫子)因為原爸爸被分割，所以要換新爸爸
 		}
 		split->data_num = index;//新node的資料數就是剛剛搬的數量
-		insert(full->middle(), split);//把小孩的中間值塞到自己內部，如果自己也爆了，就再找爸爸求救
+		insert(full->middle(), split);//把小孩的中間值塞到自己內部，如果自己也爆了，就再找爸爸求救，遞迴下去
 	}
 	T& middle() {//回傳中間值
 		return data[data_num / 2];
@@ -98,13 +99,21 @@ public:
 			cout << data[i] << ((i != data_num - 1) ? " " : "");
 		}
 	}
-	B_tree_node<T, order>* find_root() {//因為root node爆掉後會換root node，所以用這個找到新的root node
+	B_tree_node<T, order>* find_root() {//因為root node爆掉後會換新的root node，所以用這個找到新的root node
 		if (father == nullptr) return this;
 		return father->find_root();
 	}
-	int height() {//該node的高度，leaf node高度為1，往上加1，因為B樹除了leaf node外都必定有至少一個小孩，且樹是平均高度的，所以直接用0號小孩地回即可
+	int height() {//該node的高度，leaf node高度為1，往上加1，因為B樹除了leaf node外都至少有一個小孩，且樹是平均高度的，所以直接用0號小孩遞迴即可
 		if (child[0] == nullptr) return 1;
 		return 1 + child[0]->height();
+	}
+	void del() {//遞迴刪除
+		if (child[0] != nullptr) {
+			for (int i = 0;i <= data_num;i++) {
+				child[i]->del();
+			}
+		}
+		delete this;
 	}
 
 };
@@ -122,18 +131,22 @@ public:
 	void output() {//一層一層的輸出整個樹
 		int H = root->height();//樹高
 		for (int i = 0;i < H;i++) {
-			output_layer(root, i, 0);//每一的層輸出，遞迴function
+			output_layer(root, i, 0);//每一層的輸出，遞迴function
 			cout << endl;
 		}
 	}
+	~B_tree() {//釋放記憶體，遞迴刪除
+		root->del();
+	}
 private:
 	B_tree_node<T,order>* root = nullptr;
-	void output_layer(B_tree_node<T, order>* now,int target_layer,int now_layer) {//輸出target_layer層的所有資料
-		if (now == nullptr) return;//leaf node的小孩，在這裡終止遞迴
+	void output_layer(B_tree_node<T, order>* now,int target_layer,int now_layer) {//輸出target_layer層的所有資料，now_layer是now指標指向node的層數
+		if (now == nullptr) return;//leaf node的小孩為nullptr，防呆用
 		if (target_layer != now_layer) {//不是想要的layer，就遞迴往下層走
-			for (int i = 0;i < now->data_num + 1;i++) {//每一個小孩都遞迴出去
-				output_layer(now->child[i], target_layer, now_layer + 1);
+			for (int i = 0;i <= now->data_num;i++) {//每一個小孩都遞迴出去
+				output_layer(now->child[i], target_layer, now_layer + 1);//下一層的now_layer就是這層+1
 				cout << (i != now->data_num ? " / " : "");//node輸出後要用/區分，最後一個node輸出則不用
+				//My code works, I have no idea why
 			}
 		}
 		else {//是想要輸出的層，輸出該node
