@@ -19,7 +19,7 @@ public:
 		data[data_num] = new_data;
 		data_num++;
 	}
-	void set_null() { for (int i = 0;i < order;i++)child[i] = nullptr; }
+	void set_null() { for (int i = 0;i <= order;i++)child[i] = nullptr; }
 	void leaf_insert(T new_data) {//insert to leaf node(b tree rule)
 		if (child[0] != nullptr) {//not leaf node
 			for (int i = 0;i < data_num;i++) {
@@ -125,30 +125,26 @@ public:
 		}
 	}
 	void output() {
-		output(root, 1, 1,root->height());
+		//cout << "height:" << root->height() << endl;
+		
+		int H = root->height();
+		for (int i = 0;i < H;i++) {
+			output(root, i, 0);
+			cout << endl;
+		}
 	}
 private:
 	B_tree_node<T,order>* root = nullptr;
-	void output(B_tree_node<T, order>* now, int target_layer,int layer,int height) {
-		if (now == nullptr || layer > target_layer || target_layer > height) return;
-		static int pre_target = target_layer;
-		if (pre_target != target_layer) {
-			cout << endl;
-		}
-		pre_target = target_layer;
-		if (target_layer == layer) {
-			now->output();
-			if (target_layer == 1) {//keep recursive
-				output(root, target_layer + 1, 1, height);
+	void output(B_tree_node<T, order>* now,int target_layer,int now_layer) {
+		if (now == nullptr) return;
+		if (target_layer != now_layer) {
+			for (int i = 0;i < now->data_num + 1;i++) {
+				output(now->child[i], target_layer, now_layer + 1);
+				cout << (i != now->data_num ? " / " : "");
 			}
 		}
 		else {
-			if (now->child[0] == nullptr) return;
-			for (int i = 0;i < now->data_num + 1;i++) {
-				output(now->child[i], target_layer, layer + 1, height);
-				cout << (i != now->data_num ? "/ " : "");
-			}
-			output(root, target_layer + 1, 1, height);
+			now->output();
 		}
 	}
 };
@@ -156,9 +152,8 @@ int main() {
 	B_tree<int,3> tree;
 	int new_data;
 	while (cin >> new_data) {
-		tree.insert(new_data);
+		tree.insert(new_data);		
 	}
 	tree.output();
-	cout << endl;
 	return 0;
 }
