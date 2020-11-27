@@ -70,11 +70,11 @@ public:
 				father = new B_tree_node<T, order>;
 				father->child[0] = this;//爆掉後自己就變成分割後的左侧，右側由爸爸產生並搬家
 			}
-			father->help_child(this);//爆掉後呼叫的function，產生分割後的右侧並搬家
+			father->split_child(this);//爆掉後呼叫的function，產生分割後的右侧並搬家
 			data_num /= 2;//分割後的資料數是原資料數除以2
 		}
 	}
-	void help_child(B_tree_node<T, order>* full) {//把小孩分割，並搬家，然後把小孩中間值insert到自己內部
+	void split_child(B_tree_node<T, order>* full) {//把小孩分割，並搬家，然後把小孩中間值insert到自己內部
 		B_tree_node<T, order>* split = new B_tree_node<T, order>(this);//配置新的node，放置分割後的右側
 		int index = 0;//用於搬家的變數，順便可得知新node資料數
 		for (int i = full->data_num / 2 + 1;i < order;i++,index++) {//把小孩右側搬到新node
@@ -120,7 +120,13 @@ public:
 
 template<typename T, unsigned int order>
 class B_tree {//B樹
+private:
+	B_tree_node<T, order>* root = nullptr;
 public:
+	~B_tree() {//釋放記憶體，遞迴刪除
+		root->del();
+		root = nullptr;
+	}
 	void insert(T new_data) {
 		if (root == nullptr) root = new B_tree_node<T, order>(new_data);//如果甚麼都還沒有，就配置記憶體給root
 		else {
@@ -135,18 +141,13 @@ public:
 			cout << endl;
 		}
 	}
-	~B_tree() {//釋放記憶體，遞迴刪除
-		root->del();
-	}
 private:
-	B_tree_node<T,order>* root = nullptr;
 	void output_layer(B_tree_node<T, order>* now,int target_layer,int now_layer) {//輸出target_layer層的所有資料，now_layer是now指標指向node的層數
 		if (now == nullptr) return;//leaf node的小孩為nullptr，防呆用
 		if (target_layer != now_layer) {//不是想要的layer，就遞迴往下層走
 			for (int i = 0;i <= now->data_num;i++) {//每一個小孩都遞迴出去
 				output_layer(now->child[i], target_layer, now_layer + 1);//下一層的now_layer就是這層+1
 				cout << (i != now->data_num ? " / " : "");//node輸出後要用/區分，最後一個node輸出則不用
-				//My code works, I have no idea why
 			}
 		}
 		else {//是想要輸出的層，輸出該node
@@ -154,6 +155,7 @@ private:
 		}
 	}
 };
+//20 45 30 50 100 70 40 10 87 1
 int main() {
 	B_tree<int,3> tree;//2 3樹就是order為3的B樹
 	int new_data;//暫存每個數字的變數

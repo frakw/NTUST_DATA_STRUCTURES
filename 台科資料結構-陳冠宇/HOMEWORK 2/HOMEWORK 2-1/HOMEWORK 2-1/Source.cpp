@@ -8,11 +8,6 @@ class BST_node {//BST節點的class
 public:
 	BST_node() {}
 	BST_node(T _data):data(_data) {}
-	T data;
-	bool avenger = false;
-	BST_node<T>* father = nullptr;//爸爸
-	BST_node<T>* left = nullptr;//左邊的小孩
-	BST_node<T>* right = nullptr;//右邊的小孩
 	bool operator>(const BST_node& i) { return data > i.data; }
 	bool operator>(const T& i) { return data > i; }
 	bool operator>=(const BST_node& i) { return data >= i.data; }
@@ -30,14 +25,23 @@ public:
 		}
 		delete this;
 	}
+private:
+	T data;
+	BST_node<T>* father = nullptr;//爸爸
+	BST_node<T>* left = nullptr;//左邊的小孩
+	BST_node<T>* right = nullptr;//右邊的小孩
+	template<typename> friend class BST;
 };
 
 template<typename T>
 class BST {//BST的class
+private:
+	BST_node<T>* root = nullptr;//根節點的指標
 public:
 	BST() {}
 	~BST() {//釋放記憶體
 		root->del();
+		root = nullptr;
 	}
 	void insert(T new_data) {//這個是從根結點出發的insert，另有重載一個可從任意指標insert的遞迴function
 		if (root == nullptr) {//如果甚麼都沒有
@@ -55,11 +59,18 @@ public:
 	void erase(T data) {//呼叫search，找到指標後，呼叫erase的重載function
 		erase(search(data));
 	}
-
+	//以下函式是為了簡化介面，真正實作的function重載在private裡
+	BST_node<T>* search(T data) { return search(root, data); }//搜尋節點，回傳目標節點指標
+	BST_node<T>* largest() { return largest(root); }//回傳樹最大節點的指標
+	BST_node<T>* smallest() { return smallest(root); }//回傳樹最小節點的指標
+	void pre_order_output() { pre_order_output(root); }//輸出前序
+	void in_order_output() { in_order_output(root); }//輸出中序
+	void post_order_output() { post_order_output(root); }//輸出後序
+	int height() { return height(root); }//回傳樹高
 	void cut_half() {//Thanos Finger Snap 找到最接近切半的水平線後，將水平線以下node全部刪除
 		int H = height();//樹高(有幾層)
 		int* layer_count = new int[H] {};//動態配置陣列，儲存每層的node數
-		traversal(root, layer_count, 0);//遞迴計算每層的node數，結果存於layer_count
+		get_layer_number_of_node(root, layer_count, 0);//遞迴計算每層的node數，結果存於layer_count
 		int min_diff = 2147483647;//水平線上數量與線下數量差，一開始先設很大，避免被超過
 		int cut_layer = 0;//儲存最佳的水平線(層數)
 		for (int i = 0;i < H;i++) {//跑過每條水平線，找最好的
@@ -102,16 +113,8 @@ public:
 			cut_layer_and_create_forest(now->right, forest, forest_index, target_layer, now_layer + 1);//遞迴右邊
 		}
 	}
-	//以下函式是為了簡化介面，真正實作的function重載在private裡
-	BST_node<T>* search(T data) { return search(root, data);}
-	BST_node<T>* largest() { return largest(root);}
-	BST_node<T>* smallest() {return smallest(root);}
-	void pre_order_output() { pre_order_output(root);}
-	void in_order_output() { in_order_output(root); }
-	void post_order_output() { post_order_output(root);}
-	int height() { return height(root);}
+
 private:
-	BST_node<T>* root = nullptr;//根節點的指標
 	//使用指標的指標才能在下次遞迴中配置記憶體並連接上一個node
 	void insert(BST_node<T>** now,T new_data, BST_node<T>* father) {
 		if (*now == nullptr) {//如果甚麼都沒有
@@ -178,11 +181,11 @@ private:
 		int RH = height(now->right);
 		return (LH > RH ? LH : RH) + 1;//左右子樹高度選大的並加上自己(1)
 	}
-	void traversal(BST_node<T>* now, int* layer_count, int layer) {//計算每層node數
+	void get_layer_number_of_node(BST_node<T>* now, int* layer_count, int layer) {//計算每層node數
 		if (now == nullptr) return;//防呆
 		layer_count[layer]++;//該層node數加1
-		traversal(now->left, layer_count, layer + 1);//往左遞迴下去，下一層為layer+1
-		traversal(now->right, layer_count, layer + 1);//往右遞迴下去，下一層為layer+1
+		get_layer_number_of_node(now->left, layer_count, layer + 1);//往左遞迴下去，下一層為layer+1
+		get_layer_number_of_node(now->right, layer_count, layer + 1);//往右遞迴下去，下一層為layer+1
 	}
 	void pre_order_output(BST_node<T>* now) {//前序輸出，輸出該節點，然後繼續遞迴
 		if (now == nullptr) return;
@@ -227,6 +230,6 @@ int main() {
 	while (s >> data) {//用stringstream讀數字
 		tree.erase(data);//刪除Avengers
 	}
-	tree.cut_half();//刪除一半node後輸出中序(上半部)、前序(下半部)
+	tree.cut_half();//刪除一半node後輸出上半部(中序)、下半部(前序)
 	return 0;
 }
