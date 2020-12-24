@@ -54,7 +54,7 @@ int main() {
 		int node2_set_index = which_set(all_set, i.node2);//第二個端點所在的集合，用陣列(vector)的index表示
 		if (node1_set_index != node2_set_index) {//如果不在同一個集合裡，代表不會形成一個環，這條邊屬於MST的一員
 			//由於這2個集合間有邊連接了，所以將2個集合合併為一個集合
-			all_set[node1_set_index].insert(all_set[node2_set_index].begin(), all_set[node2_set_index].end());//把端點2所在的集合加到端點2所在的集合
+			all_set[node1_set_index].insert(all_set[node2_set_index].begin(), all_set[node2_set_index].end());//把端點2所在的集合加到端點1所在的集合
 			all_set.erase(all_set.begin() + node2_set_index);//刪除端點2所在的集合
 			result *= i.probability;//結果乘上該條邊的probability
 		}

@@ -45,7 +45,7 @@ Node<N, W>* init_new_node(Node<N, W>* all, N name, int total) {//±q©Ò¦³¸`ÂI°}¦C¤
 
 template<typename N, typename W>
 void print_path(Node<N, W>* now) {//¦L¥X±q°_©lÂI¨ì²×ÂIªº»¼°j¨ç¦¡¡A±q²×ÂI¶}©l©¹¤÷¸`ÂI»¼°jª½¨ì°_©lÂI¡A
-	if (now->parent == nullptr) {
+	if (now->parent == nullptr) {//°_©l¸`ÂIªº¤÷¸`ÂI¬°null
 		cout << now->name;//°_©lÂI«e­±¤£¥[ªÅ®æ
 		return;//»¼°j¨ì°_©lÂI«áµ²§ô¡A¶}©l¦^¦¬(¿é¥X)¤§«eªº»¼°jª½¨ì
 	}
